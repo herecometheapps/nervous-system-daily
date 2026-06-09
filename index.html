@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Daily Practice</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
+<meta name="theme-color" content="#EDF4EF">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F7F4F0;
+  --surface: #FFFFFF;
+  --border: #E4DDD5;
+  --text: #2A2624;
+  --muted: #8C8480;
+  --light: #C0B8B2;
+  --sage: #7B9E87;
+  --sage-lt: #EDF4EF;
+  --sage-dk: #4E7A5A;
+  --taupe: #B8A99A;
+  --taupe-lt: #F3EDE8;
+  --amber: #C4973A;
+  --amber-lt: #FBF3E3;
+  --lav: #9B91B0;
+  --lav-lt: #EDEBF5;
+  --r: 16px;
+  --r-sm: 10px;
+  --shadow: 0 2px 10px rgba(0,0,0,.06);
+  --nav-h: 68px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+html, body { height: 100%; overscroll-behavior: none; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── VIEWS ── */
+.view { display: flex; flex-direction: column; height: 100dvh; height: 100vh; }
+.view[hidden] { display: none; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-t) + 14px) 18px 14px;
+  flex-shrink: 0;
+}
+.topbar-row {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 10px; margin-bottom: 12px;
+}
+.app-title {
+  font-family: Georgia, serif; font-size: 20px;
+  font-weight: normal; letter-spacing: -.2px; line-height: 1.2;
+}
+.app-date { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.progress-row { display: flex; align-items: center; gap: 10px; }
+.progress-track {
+  flex: 1; height: 5px; background: var(--border);
+  border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--sage), #9DC4A6);
+  border-radius: 3px; transition: width .5s ease;
+}
+.progress-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+/* Plan + Journal topbar */
+.simple-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-t) + 14px) 18px 14px;
+  flex-shrink: 0;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+}
+.simple-topbar h1 {
+  font-family: Georgia, serif; font-size: 20px; font-weight: normal;
+}
+.simple-topbar p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.save-btn {
+  height: 36px; padding: 0 18px; border-radius: 20px;
+  border: none; background: var(--sage); color: #fff;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: inherit; white-space: nowrap; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.save-btn:active { background: var(--sage-dk); }
+
+/* ── SCROLL AREA ── */
+.scroll-area {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 16px 14px calc(var(--nav-h) + var(--safe-b) + 16px);
+}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-b));
+  padding-bottom: var(--safe-b); padding-top: 8px;
+  background: var(--surface); border-top: 1px solid var(--border);
+  display: flex; align-items: flex-start; z-index: 100;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 4px; background: transparent; border: none; cursor: pointer;
+  padding: 4px 8px 0; color: var(--light); transition: color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-btn.active { color: var(--sage); }
+.nav-btn svg { width: 24px; height: 24px; }
+.nav-btn span { font-size: 11px; font-weight: 600; letter-spacing: .2px; font-family: inherit; }
+
+/* ── SECTION HEADERS ── */
+.section-head {
+  display: flex; align-items: center; gap: 9px;
+  margin: 24px 0 10px;
+}
+.section-head:first-child { margin-top: 4px; }
+.section-name { font-family: Georgia, serif; font-size: 14px; font-weight: normal; white-space: nowrap; }
+.section-tag {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .9px; padding: 2px 8px; border-radius: 20px;
+}
+.tag-core  { background: var(--sage-lt); color: var(--sage-dk); }
+.tag-p2    { background: var(--taupe-lt); color: #7A6558; }
+.tag-bonus { background: var(--lav-lt); color: #5F547A; }
+.section-rule { flex: 1; height: 1px; background: var(--border); }
+.section-desc { font-size: 12px; color: var(--muted); margin: -4px 0 10px; line-height: 1.7; }
+
+/* ── DAILY CARDS ── */
+.card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); margin-bottom: 10px;
+  overflow: hidden; box-shadow: var(--shadow); transition: border-color .2s;
+}
+.card.done { border-color: #B8D9BF; }
+.card-head {
+  display: flex; align-items: center; padding: 14px;
+  gap: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; min-height: 66px;
+}
+.card-head:active { background: var(--bg); }
+.cat-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+}
+.ic-vest   { background: #ECF3EE; }
+.ic-act    { background: #E6EFF7; }
+.ic-pass   { background: #EDE8F4; }
+.ic-tact   { background: #F5EDEA; }
+.ic-breath { background: #E6F4F0; }
+.ic-aud    { background: #FFF5E6; }
+.ic-olf    { background: #F5E9EC; }
+.ic-vis    { background: #E8ECF7; }
+
+.card-title-area { flex: 1; min-width: 0; }
+.card-name { font-size: 15px; font-weight: 600; }
+.card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-sub.set { color: var(--sage-dk); }
+.card-sub.swapped { color: var(--taupe); }
+.check-circle {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--border); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .2s; color: transparent;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.check-circle.done { background: var(--sage); border-color: var(--sage); color: white; }
+.card-chevron { font-size: 13px; color: var(--light); flex-shrink: 0; transition: transform .2s; margin-left: 2px; }
+.card.open .card-chevron { transform: rotate(180deg); }
+.card-body { display: none; border-top: 1.5px solid var(--border); padding: 16px 14px; }
+.card.open .card-body { display: block; }
+
+/* ── FIELD LABEL ── */
+.field-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--muted); margin-bottom: 8px;
+}
+
+/* ── SLOT ── */
+.slot-row { display: flex; gap: 7px; margin-bottom: 20px; }
+.slot-btn {
+  flex: 1; min-height: 40px; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); background: transparent;
+  font-size: 13px; color: var(--muted); cursor: pointer;
+  font-family: inherit; font-weight: 500; -webkit-tap-highlight-color: transparent;
+}
+.slot-btn.active { background: var(--sage-lt); border-color: var(--sage); color: var(--sage-dk); font-weight: 600; }
+
+/* ── ACTIVITY DISPLAY ── */
+.activity-display {
+  background: var(--bg); border-radius: var(--r-sm);
+  padding: 14px; margin-bottom: 20px;
+}
+.act-type-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .9px; color: var(--muted); margin-bottom: 4px; }
+.act-type-label.backup { color: var(--taupe); }
+.act-name { font-size: 18px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 12px; }
+.swap-btn {
+  width: 100%; min-height: 42px; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); background: var(--surface); font-size: 13px;
+  color: var(--muted); cursor: pointer; font-family: inherit; font-weight: 500;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+}
+.swap-btn:active { background: var(--bg); }
+
+/* No plan */
+.no-plan { background: var(--bg); border-radius: var(--r-sm); padding: 20px 14px; text-align: center; margin-bottom: 20px; }
+.no-plan p { font-size: 13px; color: var(--muted); line-height: 1.7; }
+.go-plan-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 12px; padding: 9px 20px; border-radius: 20px;
+  border: 1.5px solid var(--sage); background: var(--sage-lt);
+  color: var(--sage-dk); font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent;
+}
+.go-plan-btn:active { background: var(--sage); color: white; }
+
+/* ── TIMER ── */
+.timer-box { background: var(--bg); border-radius: var(--r-sm); padding: 16px 14px 12px; margin-bottom: 20px; }
+.timer-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.goal-row { display: flex; align-items: center; gap: 10px; }
+.goal-adj {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface);
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+}
+.goal-adj:active { background: var(--sage-lt); border-color: var(--sage); color: var(--sage-dk); }
+.goal-val { font-size: 13px; font-weight: 700; color: var(--text); min-width: 44px; text-align: center; }
+.timer-face { text-align: center; padding: 6px 0 14px; }
+.timer-digits { font-family: Georgia, serif; font-size: 52px; letter-spacing: 5px; color: var(--text); line-height: 1; transition: color .3s; }
+.timer-digits.finished { color: var(--sage); }
+.timer-btns { display: flex; gap: 10px; justify-content: center; }
+.t-btn {
+  flex: 1; max-width: 160px; min-height: 44px; border-radius: 22px;
+  border: 1.5px solid var(--border); background: var(--surface);
+  font-size: 14px; font-weight: 600; color: var(--text); cursor: pointer;
+  font-family: inherit; -webkit-tap-highlight-color: transparent;
+}
+.t-btn.primary { background: var(--sage); border-color: var(--sage); color: white; }
+.t-btn.primary:active { background: var(--sage-dk); }
+.t-btn:active:not(.primary) { background: var(--bg); }
+
+/* ── NOTES ── */
+.notes-field {
+  width: 100%; border: 1.5px solid var(--border); border-radius: var(--r-sm);
+  padding: 11px 13px; font-size: 14px; color: var(--text); font-family: inherit;
+  background: var(--surface); resize: none; min-height: 64px; line-height: 1.6;
+  transition: border-color .15s; -webkit-appearance: none;
+}
+.notes-field:focus { outline: none; border-color: var(--sage); }
+.notes-field::placeholder { color: var(--light); }
+
+/* ── LOCKED ── */
+.locked-body { display: flex; flex-direction: column; align-items: center; padding: 28px 16px; text-align: center; gap: 10px; }
+.lock-icon { font-size: 28px; opacity: .28; }
+.lock-text { font-size: 13px; color: var(--muted); line-height: 1.7; max-width: 280px; }
+.unlock-btn {
+  margin-top: 4px; min-height: 44px; padding: 0 24px; border-radius: 22px;
+  border: 1.5px solid var(--taupe); background: var(--taupe-lt);
+  color: #7A6558; font-size: 14px; font-weight: 600;
+  cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent;
+}
+.unlock-btn:active { background: var(--taupe); color: white; }
+
+/* ════════════════════════════════
+   MY PLAN — ACCORDIONS
+   ════════════════════════════════ */
+.plan-intro {
+  font-size: 13px; color: var(--muted); line-height: 1.7;
+  background: var(--sage-lt); border-radius: var(--r-sm);
+  padding: 12px 14px; margin-bottom: 16px;
+}
+.pacc {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); margin-bottom: 10px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.pacc-head {
+  display: flex; align-items: center; padding: 14px;
+  gap: 12px; cursor: pointer; min-height: 66px;
+  -webkit-tap-highlight-color: transparent;
+}
+.pacc-head:active { background: var(--bg); }
+.pacc-info { flex: 1; min-width: 0; }
+.pacc-name { font-size: 15px; font-weight: 600; }
+.pacc-summary {
+  font-size: 12px; color: var(--muted); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pacc-summary.set { color: var(--sage-dk); }
+.pacc-status {
+  font-size: 12px; font-weight: 700;
+  color: var(--light); flex-shrink: 0; margin-left: 4px;
+}
+.pacc-status.done { color: var(--sage); }
+.pacc-chevron { font-size: 13px; color: var(--light); flex-shrink: 0; transition: transform .2s; }
+.pacc.open .pacc-chevron { transform: rotate(180deg); }
+
+.pacc-body { display: none; border-top: 1.5px solid var(--border); }
+.pacc.open .pacc-body { display: block; }
+
+.pacc-desc {
+  font-size: 13px; color: var(--muted); line-height: 1.75;
+  padding: 14px 14px 0; margin-bottom: 4px;
+}
+.pacc-pickers { padding: 14px; }
+
+.plan-slot-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; margin-bottom: 9px;
+}
+.plan-slot-label.pl { color: var(--sage-dk); }
+.plan-slot-label.bl { color: var(--taupe); }
+.pdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pdot.p { background: var(--sage); }
+.pdot.b { background: var(--taupe); }
+
+.plan-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.pchip {
+  padding: 8px 14px; border: 1.5px solid var(--border);
+  border-radius: 20px; background: transparent;
+  font-size: 13px; color: var(--text);
+  cursor: pointer; font-family: inherit; line-height: 1.3;
+  min-height: 36px; transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pchip:active { background: var(--bg); }
+.pchip.sel-p { background: var(--sage); border-color: var(--sage); color: white; font-weight: 600; }
+.pchip.sel-b { background: var(--taupe-lt); border-color: var(--taupe); color: #7A6558; font-weight: 600; }
+.pchip.dimmed { opacity: .35; pointer-events: none; }
+.plan-divider { height: 1px; background: var(--border); margin: 4px 0 14px; }
+
+/* Locked plan cat */
+.pacc-locked { padding: 16px 14px; font-size: 13px; color: var(--light); }
+
+/* ════════════════════════════════
+   JOURNAL
+   ════════════════════════════════ */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); padding: 18px 10px 14px;
+  text-align: center; box-shadow: var(--shadow);
+}
+.stat-icon { font-size: 18px; margin-bottom: 6px; }
+.stat-num {
+  font-family: Georgia, serif; font-size: 38px; font-weight: normal;
+  color: var(--sage); line-height: 1; margin-bottom: 5px;
+}
+.stat-label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; line-height: 1.4; }
+
+.reflection-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); margin-bottom: 24px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.reflection-head {
+  padding: 13px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.reflection-head-text { font-family: Georgia, serif; font-size: 15px; font-weight: normal; }
+.reflection-date { font-size: 12px; color: var(--muted); margin-left: auto; }
+.reflection-body { padding: 14px; }
+.reflection-ta {
+  width: 100%; border: none; font-size: 14px; line-height: 1.75;
+  color: var(--text); font-family: inherit; resize: none;
+  min-height: 80px; background: transparent; -webkit-appearance: none;
+}
+.reflection-ta:focus { outline: none; }
+.reflection-ta::placeholder { color: var(--light); }
+
+/* Journal history */
+.journal-section-label {
+  font-family: Georgia, serif; font-size: 15px; font-weight: normal;
+  color: var(--text); margin-bottom: 12px; margin-top: 4px;
+}
+.journal-empty {
+  text-align: center; padding: 32px 20px;
+  font-size: 13px; color: var(--light); line-height: 1.7;
+}
+
+.jday {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); margin-bottom: 10px;
+  overflow: hidden; box-shadow: var(--shadow);
+  border-left: 4px solid var(--border);
+}
+.jday.core-done { border-left-color: var(--sage); }
+.jday.partial   { border-left-color: var(--amber); }
+
+.jday-head {
+  padding: 12px 14px; display: flex; align-items: baseline;
+  justify-content: space-between; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.jday-date { font-size: 14px; font-weight: 700; }
+.jday-badge { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.jday-badge.green { color: var(--sage-dk); }
+
+.jday-body { padding: 12px 14px; }
+.jact {
+  display: flex; align-items: flex-start; gap: 9px;
+  padding: 4px 0; font-size: 13px; line-height: 1.4;
+}
+.jact-icon { font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; }
+.jact-name { color: var(--text); }
+.jact-tag {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .6px; padding: 1px 5px; border-radius: 4px;
+  margin-left: 5px; flex-shrink: 0; align-self: center;
+}
+.jact-tag.backup { background: var(--taupe-lt); color: #7A6558; }
+
+.jbonus-sep {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--light);
+  display: flex; align-items: center; gap: 8px;
+  margin: 10px 0 6px;
+}
+.jbonus-sep::before, .jbonus-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.jday-note {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--muted); line-height: 1.75; font-style: italic;
+}
+
+/* ── STATE CHECK-IN ── */
+.checkin-card {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r); margin-bottom: 16px;
+  overflow: hidden; box-shadow: var(--shadow);
+}
+.checkin-head {
+  padding: 11px 14px 0;
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.checkin-title { font-family: Georgia, serif; font-size: 14px; font-weight: normal; }
+.checkin-hint { font-size: 11px; color: var(--light); }
+.checkin-states {
+  display: flex; gap: 7px; padding: 10px 14px 14px; flex-wrap: wrap;
+}
+.state-pill {
+  flex: 1; min-width: 52px; min-height: 38px;
+  border-radius: 20px; border: 1.5px solid transparent;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: inherit; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; line-height: 1.2;
+  -webkit-tap-highlight-color: transparent; transition: all .15s;
+  gap: 1px;
+}
+.state-pill span.slabel { font-size: 10px; font-weight: 600; letter-spacing: .2px; }
+.sp-blue   { background: #EAF2FA; border-color: #C0D9EF; color: #2A5A82; }
+.sp-green  { background: #E8F4EB; border-color: #A8D4B4; color: #2E6B40; }
+.sp-yellow { background: #FBF4DC; border-color: #E8D280; color: #7A6010; }
+.sp-red    { background: #FAEAEA; border-color: #F0B8B8; color: #8B2E2E; }
+.sp-purple { background: #EDEAF5; border-color: #C4B8E4; color: #4E3D8A; }
+.state-pill:active { filter: brightness(.94); }
+.checkin-log {
+  border-top: 1px solid var(--border); padding: 10px 14px;
+  display: flex; flex-wrap: wrap; gap: 6px; min-height: 0;
+}
+.checkin-log:empty { display: none; }
+.log-entry {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--muted); background: var(--bg);
+  border-radius: 12px; padding: 3px 9px;
+}
+.log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ld-blue   { background: #5B9DC9; }
+.ld-green  { background: #5BA870; }
+.ld-yellow { background: #C9A830; }
+.ld-red    { background: #C95B5B; }
+.ld-purple { background: #7B68C8; }
+
+/* State dots in journal history */
+.jstate-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.jstate-pill {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; border-radius: 10px; padding: 2px 7px;
+}
+.jsp-blue   { background: #EAF2FA; color: #2A5A82; }
+.jsp-green  { background: #E8F4EB; color: #2E6B40; }
+.jsp-yellow { background: #FBF4DC; color: #7A6010; }
+.jsp-red    { background: #FAEAEA; color: #8B2E2E; }
+.jsp-purple { background: #EDEAF5; color: #4E3D8A; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: calc(var(--nav-h) + var(--safe-b) + 12px); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #2A2624; color: white;
+  padding: 10px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity .25s, transform .25s;
+  z-index: 200; pointer-events: none; white-space: nowrap;
+  max-width: calc(100vw - 40px);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ VIEW: TODAY ═══════════════ -->
+<div class="view" id="v-daily">
+  <div class="topbar">
+    <div class="topbar-row">
+      <div>
+        <div class="app-title">Daily Practice</div>
+        <div class="app-date" id="app-date"></div>
+      </div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="progress-label">0 / 3 core</div>
+    </div>
+  </div>
+  <div class="scroll-area" id="daily-scroll">
+    <!-- State check-in card rendered here first, then categories below -->
+    <div class="checkin-card" id="checkin-card">
+      <div class="checkin-head">
+        <span class="checkin-title">How's your system right now?</span>
+        <span class="checkin-hint">Tap to log your state</span>
+      </div>
+      <div class="checkin-states">
+        <button class="state-pill sp-blue"  data-state-log="blue"  >🔵<span class="slabel">Blue</span></button>
+        <button class="state-pill sp-green" data-state-log="green" >🟢<span class="slabel">Green</span></button>
+        <button class="state-pill sp-yellow" data-state-log="yellow">🟡<span class="slabel">Yellow</span></button>
+        <button class="state-pill sp-red"   data-state-log="red"   >🔴<span class="slabel">Red</span></button>
+        <button class="state-pill sp-purple" data-state-log="purple">🟣<span class="slabel">Purple</span></button>
+      </div>
+      <div class="checkin-log" id="checkin-log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ VIEW: MY PLAN ════════════ -->
+<div class="view" id="v-plan" hidden>
+  <div class="simple-topbar">
+    <div>
+      <h1>My Plan</h1>
+      <p>Primary &amp; backup activity per category</p>
+    </div>
+    <button class="save-btn" id="save-plan-btn">Save plan</button>
+  </div>
+  <div class="scroll-area" id="plan-scroll"></div>
+</div>
+
+<!-- ═══════════════ VIEW: JOURNAL ════════════ -->
+<div class="view" id="v-journal" hidden>
+  <div class="simple-topbar">
+    <div>
+      <h1>Journal</h1>
+      <p>Your practice history</p>
+    </div>
+  </div>
+  <div class="scroll-area" id="journal-scroll"></div>
+</div>
+
+<!-- ═══════════════ BOTTOM NAV ═══════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-daily">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+    </svg>
+    <span>Today</span>
+  </button>
+  <button class="nav-btn" id="nav-plan">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 11l3 3L22 4"/>
+      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+    </svg>
+    <span>My Plan</span>
+  </button>
+  <button class="nav-btn" id="nav-journal">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
+      <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+    </svg>
+    <span>Journal</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════
+const CATS = [
+  {
+    id: 'vestibular', name: 'Vestibular', icon: '🌀', ic: 'ic-vest', phase: 1,
+    desc: 'The vestibular system — located in your inner ear — is one of the most powerful entry points for nervous system regulation. Movement, balance challenges, and changes in head position send strong recalibrating signals to the brain, helping lower its background threat level.',
+    activities: ['Head rolls','Spin in a chair','Arm circles (arms extended)','Swing on a swing set','Tree pose (yoga)','Jumping jacks','Play tag with the dog','Rock on a ball (back & forth)','Jump rope (alternating 1 & 2 feet)','Dance to fast-paced music','Roll down a hill','Rocking chair','Ride a bike','Legs up the wall']
+  },
+  {
+    id: 'activeProprioception', name: 'Active Proprioception', icon: '💪', ic: 'ic-act', phase: 1,
+    desc: 'When your muscles push against resistance, they send rich proprioceptive signals to the brain — helping it build a clearer, safer map of your body. This reduces the background noise of unexplained physical tension and lowers ambient anxiety.',
+    activities: ['Jumping','Climbing','Wall push-ups','Play tug of war','Push against heavy furniture','Vacuum','Wash windows','Take out the trash','Carry heavy items','Weightlifting exercises','Resistance training']
+  },
+  {
+    id: 'passiveProprioception', name: 'Passive Proprioception', icon: '🛁', ic: 'ic-pass', phase: 1,
+    desc: 'Deep, sustained pressure activates your parasympathetic nervous system — the "rest and digest" mode. Think of it as the nervous system equivalent of being held: it communicates safety without requiring any effort on your part.',
+    activities: ['Wearing a weighted vest','Receiving deep massage','Use massage tool','Deep pressure massage with pillows','Use a weighted blanket to sleep','Squeeze arms and legs','Self-hugging','Use compression clothing','Wrap yourself in a blanket']
+  },
+  {
+    id: 'tactile', name: 'Tactile', icon: '✋', ic: 'ic-tact', phase: 2,
+    desc: 'Skin-level sensory input trains the nervous system to process touch, temperature, and texture without triggering a threat response. Over time, it expands your window of tolerance and anchors awareness in the present moment.',
+    activities: ['Brush your skin','Take a warm shower','Manipulate textured objects','Apply ice packs on skin','Touch different types of fabric','Garden','Play with clay','Brush the dog']
+  },
+  {
+    id: 'breathing', name: 'Breathing', icon: '🌬️', ic: 'ic-breath', phase: 3,
+    desc: 'Conscious breath is one of the few autonomic functions you can voluntarily control. By slowing or extending your exhale, you directly activate the vagus nerve and shift your heart rate variability — a direct dial on your nervous system state.',
+    activities: ['Physiological sigh (double inhale, long exhale)','Box breathing (4-4-4-4)','Extended exhale (in 4, out 8)','4-7-8 breathing','Diaphragmatic belly breathing','Humming exhale','Coherent breathing (5 sec in, 5 sec out)','Alternate nostril breathing']
+  },
+  {
+    id: 'auditory', name: 'Auditory', icon: '🎵', ic: 'ic-aud', phase: 3,
+    desc: 'Sound bypasses conscious processing and reaches the nervous system directly. Low-frequency tones, humming, and bilateral audio can shift brainwave states, signal safety, and stimulate the vagal pathways that regulate social engagement.',
+    activities: ['Humming or toning','Nature sounds (birds, rain, stream)','Bilateral music through headphones','Singing or chanting','Low-frequency music or drums','Silence practice (notice ambient sounds)','Solfeggio frequencies']
+  },
+  {
+    id: 'olfactory', name: 'Olfactory', icon: '🌸', ic: 'ic-olf', phase: 3,
+    desc: 'The olfactory nerve connects directly to the limbic system — the brain\'s emotional and memory center — making scent one of the fastest routes to shifting your state. Unlike other senses, smell bypasses the thalamus and reaches the brain almost instantly.',
+    activities: ['Deep inhale of essential oil (lavender, rosemary)','Fresh herbs or flowers','Morning coffee or tea ritual','Scented lotion with slow inhale','Fresh outdoor or forest air','Beeswax candle or natural incense']
+  },
+  {
+    id: 'visual', name: 'Visual', icon: '👁️', ic: 'ic-vis', phase: 3,
+    desc: 'Your visual system powerfully influences nervous system arousal. A soft, panoramic gaze signals safety and calm; narrow, focused vision increases alertness. Practicing these inputs trains the eye-brain connection toward regulation.',
+    activities: ['Panoramic soft gaze (unfocus, wide view)','Slow scanning of a natural scene','Candlelight or firelight gazing','Green space gazing (trees, plants)','Smooth visual pursuit (follow slow movement)','Indirect sunlight exposure','Dim lights & reduce screens']
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+const STORAGE_KEY = 'nsrp_v4';
+
+function makeDefault() {
+  const plan = {}, goals = {};
+  CATS.forEach(c => { plan[c.id] = { primary: null, secondary: null }; goals[c.id] = 3; });
+  return { settings: { tactileUnlocked: false, timerGoals: goals }, plan, history: {} };
+}
+
+let S;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return makeDefault();
+    const sv = JSON.parse(raw);
+    const def = makeDefault();
+    return {
+      settings: { tactileUnlocked: sv.settings?.tactileUnlocked ?? false, timerGoals: { ...def.settings.timerGoals, ...(sv.settings?.timerGoals||{}) } },
+      plan: { ...def.plan, ...(sv.plan||{}) },
+      history: sv.history || {}
+    };
+  } catch(e) { return makeDefault(); }
+}
+
+function persist() { localStorage.setItem(STORAGE_KEY, JSON.stringify(S)); }
+
+function todayKey() { return new Date().toISOString().slice(0,10); }
+
+function getToday() {
+  const k = todayKey();
+  if (!S.history[k]) S.history[k] = {};
+  return S.history[k];
+}
+
+function getCatDay(id) {
+  const t = getToday();
+  if (!t[id]) t[id] = { completed: false, usedSecondary: false, slot: null, notes: '', activityDone: null };
+  return t[id];
+}
+
+function setCatDay(id, upd) { Object.assign(getCatDay(id), upd); persist(); }
+
+function getDayNote() { return getToday().dayNote || ''; }
+function setDayNote(txt) { getToday().dayNote = txt; persist(); }
+
+// ── STATE LOG ──
+const STATE_META = {
+  blue:   { label: 'Blue',   emoji: '🔵', desc: 'Deep rest / shutdown' },
+  green:  { label: 'Green',  emoji: '🟢', desc: 'Calm & focused' },
+  yellow: { label: 'Yellow', emoji: '🟡', desc: 'Alert / mild overload' },
+  red:    { label: 'Red',    emoji: '🔴', desc: 'Acute stress' },
+  purple: { label: 'Purple', emoji: '🟣', desc: 'Freeze / overwhelm' },
+};
+
+function logState(state) {
+  const today = getToday();
+  if (!today.stateLog) today.stateLog = [];
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+  today.stateLog.push({ state, time });
+  persist();
+  renderCheckinLog();
+  const m = STATE_META[state];
+  showToast(m.emoji+' '+m.label+' logged — '+m.desc);
+}
+
+function renderCheckinLog() {
+  const el = document.getElementById('checkin-log');
+  if (!el) return;
+  const log = getToday().stateLog || [];
+  if (log.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = log.map(e =>
+    `<div class="log-entry"><div class="log-dot ld-${e.state}"></div>${e.time} · ${STATE_META[e.state]?.label||e.state}</div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TIMERS
+// ═══════════════════════════════════════════════════════════
+const timers = {};
+
+function getTimer(id) {
+  if (!timers[id]) timers[id] = { running: false, remaining: (S.settings.timerGoals[id]||3)*60, intervalId: null, touched: false, finished: false };
+  return timers[id];
+}
+
+function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+function timerToggle(id) {
+  const t = getTimer(id);
+  if (t.running) { clearInterval(t.intervalId); t.running = false; }
+  else {
+    if (t.remaining <= 0) { t.remaining = (S.settings.timerGoals[id]||3)*60; t.finished = false; }
+    t.running = true; t.touched = true;
+    t.intervalId = setInterval(() => {
+      t.remaining = Math.max(0, t.remaining-1);
+      refreshTimerUI(id);
+      if (t.remaining <= 0) { clearInterval(t.intervalId); t.running = false; t.finished = true; playBell(); refreshTimerUI(id); }
+    }, 1000);
+  }
+  refreshTimerUI(id);
+}
+
+function timerReset(id) {
+  const t = getTimer(id);
+  clearInterval(t.intervalId);
+  t.running = false; t.touched = false; t.finished = false;
+  t.remaining = (S.settings.timerGoals[id]||3)*60;
+  refreshTimerUI(id);
+}
+
+function adjustGoal(id, delta) {
+  const nw = Math.max(1, Math.min(30, (S.settings.timerGoals[id]||3)+delta));
+  S.settings.timerGoals[id] = nw;
+  const t = getTimer(id); if (!t.touched) t.remaining = nw*60;
+  persist();
+  const el = document.getElementById('goal-'+id); if (el) el.textContent = nw+' min';
+  refreshTimerUI(id);
+}
+
+function refreshTimerUI(id) {
+  const t = getTimer(id);
+  const dig = document.getElementById('tdig-'+id);
+  const btn = document.getElementById('tbtn-'+id);
+  const rst = document.getElementById('trst-'+id);
+  if (dig) { dig.textContent = fmt(t.remaining); dig.classList.toggle('finished', t.finished); }
+  if (btn) btn.textContent = t.running ? 'Pause' : (t.finished ? 'Again' : t.touched ? 'Resume' : 'Start');
+  if (rst) rst.style.display = t.touched ? '' : 'none';
+}
+
+function playBell() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [0,.38,.76].forEach(d => {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type='sine'; o.frequency.setValueAtTime(528,ctx.currentTime+d);
+      g.gain.setValueAtTime(0,ctx.currentTime+d);
+      g.gain.linearRampToValueAtTime(0.2,ctx.currentTime+d+.01);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d+1.8);
+      o.start(ctx.currentTime+d); o.stop(ctx.currentTime+d+2);
+    });
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROGRESS & STREAK
+// ═══════════════════════════════════════════════════════════
+function coreIds() {
+  const ids = ['vestibular','activeProprioception','passiveProprioception'];
+  if (S.settings.tactileUnlocked) ids.push('tactile');
+  return ids;
+}
+
+function coreDoneCount() { const t=getToday(); return coreIds().filter(id=>t[id]?.completed).length; }
+
+function isDayDone(dateKey, ids) {
+  const d = S.history[dateKey];
+  return d ? ids.every(id=>d[id]?.completed) : false;
+}
+
+function calcStreak() {
+  const ids = coreIds();
+  const todayDone = isDayDone(todayKey(), ids);
+  let streak = 0;
+  for (let i = todayDone ? 0 : 1; i < 400; i++) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    if (!isDayDone(d.toISOString().slice(0,10), ids)) break;
+    streak++;
+  }
+  return streak;
+}
+
+function calcBestStreak() {
+  const ids = coreIds();
+  const keys = Object.keys(S.history).sort();
+  let best = 0, cur = 0;
+  for (let i = 0; i < keys.length; i++) {
+    if (!isDayDone(keys[i], ids)) { cur = 0; continue; }
+    if (i > 0 && isDayDone(keys[i-1], ids)) {
+      const prev = new Date(keys[i-1]), curr = new Date(keys[i]);
+      const diff = Math.round((curr-prev)/86400000);
+      cur = diff === 1 ? cur+1 : 1;
+    } else { cur = 1; }
+    best = Math.max(best, cur);
+  }
+  return best;
+}
+
+function calcTotalDone() {
+  const ids = coreIds();
+  return Object.keys(S.history).filter(k => isDayDone(k, ids)).length;
+}
+
+function updateProgress() {
+  const done=coreDoneCount(), total=coreIds().length, pct=total>0?(done/total)*100:0;
+  const f=document.getElementById('progress-fill'), l=document.getElementById('progress-label');
+  if (f) f.style.width = pct+'%';
+  if (l) l.textContent = done+' / '+total+' core';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — TODAY
+// ═══════════════════════════════════════════════════════════
+function renderDaily() {
+  const el = document.getElementById('daily-scroll');
+  if (!el) return;
+
+  // Remove old activity content (keep the checkin-card at top)
+  Array.from(el.children).forEach(c => { if (c.id !== 'checkin-card') c.remove(); });
+
+  const frag = document.createElement('div');
+  let h = '';
+
+  h += sH('Core Practice','Phase 1','tag-core');
+  h += '<p class="section-desc">Your daily foundation — aim for 3 min each and build toward 10 min over time.</p>';
+  CATS.filter(c=>c.phase===1).forEach(c => { h += dailyCard(c); });
+
+  h += sH('Tactile Input','Phase 2','tag-p2');
+  h += '<p class="section-desc">Add this after a few weeks of Phase 1. Unlock it whenever you feel ready.</p>';
+  h += dailyCard(CATS.find(c=>c.id==='tactile'));
+
+  h += sH('Extended Practice','Bonus','tag-bonus');
+  h += '<p class="section-desc">Sprinkle these in any time — great add-ons once your core feels solid.</p>';
+  CATS.filter(c=>c.phase===3).forEach(c => { h += dailyCard(c); });
+
+  frag.innerHTML = h;
+  el.appendChild(frag);
+  CATS.forEach(c => refreshTimerUI(c.id));
+}
+
+function sH(name, tag, cls) {
+  return `<div class="section-head"><span class="section-name">${name}</span><span class="section-tag ${cls}">${tag}</span><span class="section-rule"></span></div>`;
+}
+
+function dailyCard(cat) {
+  if (!cat) return '';
+  const day = getCatDay(cat.id);
+  const done = day.completed;
+  const locked = cat.phase===2 && !S.settings.tactileUnlocked;
+  const plan = S.plan[cat.id]||{};
+  const hasPlan = plan.primary && plan.secondary;
+  const isBackup = day.usedSecondary;
+  const current = hasPlan ? (isBackup ? plan.secondary : plan.primary) : null;
+
+  let subText = locked ? 'Locked — unlock when ready' : (!hasPlan ? 'Set up in My Plan →' : current+(day.slot?' · '+day.slot:''));
+  let subCls = (!locked && hasPlan) ? ('set'+(isBackup?' swapped':'')) : '';
+
+  return `<div class="card${done?' done':''}" id="card-${cat.id}">
+  <div class="card-head" data-toggle="${cat.id}">
+    <div class="cat-icon ${cat.ic}">${cat.icon}</div>
+    <div class="card-title-area">
+      <div class="card-name">${cat.name}</div>
+      <div class="card-sub ${subCls}" id="csub-${cat.id}">${subText}</div>
+    </div>
+    <button class="check-circle${done?' done':''}" data-check="${cat.id}">
+      <svg width="13" height="11" viewBox="0 0 13 11" fill="none"><path d="M1.5 5.5l3.5 4L11.5 1.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span class="card-chevron">▾</span>
+  </div>
+  <div class="card-body" id="body-${cat.id}">
+    ${locked ? lockedHTML() : (!hasPlan ? noPlanHTML() : bodyHTML(cat, day, plan, isBackup))}
+  </div>
+</div>`;
+}
+
+function lockedHTML() {
+  return `<div class="locked-body"><div class="lock-icon">🔒</div><div class="lock-text">Add Tactile after a few weeks of consistent Phase 1. Unlock when you feel ready.</div><button class="unlock-btn" data-action="unlock">I'm ready — Unlock Tactile</button></div>`;
+}
+
+function noPlanHTML() {
+  return `<div class="no-plan"><p>Pick a primary &amp; backup in My Plan to get started with this category.</p><button class="go-plan-btn" data-action="go-plan">Edit My Plan</button></div>`;
+}
+
+function bodyHTML(cat, day, plan, isBackup) {
+  const goal = S.settings.timerGoals[cat.id]||3;
+  const t = getTimer(cat.id);
+  const swapLabel = isBackup ? '↩ Back to primary: '+plan.primary : '⇄ Swap to backup: '+plan.secondary;
+  return `
+    <div class="field-label">Time of day</div>
+    <div class="slot-row">
+      ${['Morning','Midday','Evening'].map(s=>`<button class="slot-btn${day.slot===s?' active':''}" data-slot="${cat.id}" data-val="${s}">${s}</button>`).join('')}
+    </div>
+    <div class="activity-display" id="act-${cat.id}">
+      <div class="act-type-label${isBackup?' backup':''}">${isBackup?'Backup activity':'Primary activity'}</div>
+      <div class="act-name">${isBackup?plan.secondary:plan.primary}</div>
+      <button class="swap-btn" data-swap="${cat.id}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+        ${swapLabel}
+      </button>
+    </div>
+    <div class="timer-box">
+      <div class="timer-top">
+        <span class="field-label" style="margin-bottom:0">Timer</span>
+        <div class="goal-row">
+          <button class="goal-adj" data-goal="${cat.id}" data-delta="-1">−</button>
+          <span class="goal-val" id="goal-${cat.id}">${goal} min</span>
+          <button class="goal-adj" data-goal="${cat.id}" data-delta="1">+</button>
+        </div>
+      </div>
+      <div class="timer-face"><div class="timer-digits" id="tdig-${cat.id}">${fmt(t.remaining)}</div></div>
+      <div class="timer-btns">
+        <button class="t-btn primary" id="tbtn-${cat.id}" data-timer-toggle="${cat.id}">Start</button>
+        <button class="t-btn" id="trst-${cat.id}" data-timer-reset="${cat.id}" style="display:none">Reset</button>
+      </div>
+    </div>
+    <div class="field-label">Notes</div>
+    <textarea class="notes-field" id="notes-${cat.id}" data-notes="${cat.id}" placeholder="How did it feel? Any observations…">${day.notes||''}</textarea>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — MY PLAN (ACCORDIONS)
+// ═══════════════════════════════════════════════════════════
+let draft = {};
+
+function renderPlan() {
+  draft = JSON.parse(JSON.stringify(S.plan));
+  const el = document.getElementById('plan-scroll');
+  if (!el) return;
+
+  let h = `<p class="plan-intro">Pick a <strong>primary</strong> and a <strong>backup</strong> for each category. Both are required. Update your plan anytime — there's no schedule.</p>`;
+
+  h += sH('Core Practice','Phase 1','tag-core');
+  CATS.filter(c=>c.phase===1).forEach(c => { h += pAccordion(c); });
+
+  h += sH('Tactile Input','Phase 2','tag-p2');
+  const tact = CATS.find(c=>c.id==='tactile');
+  h += S.settings.tactileUnlocked ? pAccordion(tact) : pLocked(tact);
+
+  h += sH('Extended Practice','Bonus','tag-bonus');
+  CATS.filter(c=>c.phase===3).forEach(c => { h += pAccordion(c); });
+
+  el.innerHTML = h;
+}
+
+function pSummary(catId) {
+  const d = draft[catId]||{};
+  if (d.primary && d.secondary) return d.primary+' → '+d.secondary;
+  if (d.primary) return d.primary+' — backup needed';
+  return 'Not set up yet';
+}
+
+function pAccordion(cat) {
+  const d = draft[cat.id]||{};
+  const complete = !!(d.primary && d.secondary);
+  const summary = pSummary(cat.id);
+  const chips = (slot) => cat.activities.map(a => {
+    let cls = 'pchip';
+    if (slot==='primary'   && a===d.primary)   cls += ' sel-p';
+    if (slot==='secondary' && a===d.secondary)  cls += ' sel-b';
+    if (slot==='primary'   && a===d.secondary)  cls += ' dimmed';
+    if (slot==='secondary' && a===d.primary)    cls += ' dimmed';
+    return `<button class="${cls}" data-pc="${esc(cat.id)}" data-ps="${slot}" data-pa="${esc(a)}">${a}</button>`;
+  }).join('');
+
+  return `<div class="pacc" id="pacc-${cat.id}">
+  <div class="pacc-head" data-ptoggle="${cat.id}">
+    <div class="cat-icon ${cat.ic}">${cat.icon}</div>
+    <div class="pacc-info">
+      <div class="pacc-name">${cat.name}</div>
+      <div class="pacc-summary${complete?' set':''}" id="psum-${cat.id}">${summary}</div>
+    </div>
+    <div class="pacc-status${complete?' done':''}" id="pst-${cat.id}">${complete?'✓':''}</div>
+    <span class="pacc-chevron">▾</span>
+  </div>
+  <div class="pacc-body">
+    <p class="pacc-desc">${cat.desc}</p>
+    <div class="pacc-pickers">
+      <div class="plan-slot-label pl"><div class="pdot p"></div>Primary</div>
+      <div class="plan-chips" id="pcp-${cat.id}">${chips('primary')}</div>
+      <div class="plan-divider"></div>
+      <div class="plan-slot-label bl"><div class="pdot b"></div>Backup</div>
+      <div class="plan-chips" id="pcb-${cat.id}">${chips('secondary')}</div>
+    </div>
+  </div>
+</div>`;
+}
+
+function pLocked(cat) {
+  return `<div class="pacc" id="pacc-${cat.id}">
+  <div class="pacc-head">
+    <div class="cat-icon ${cat.ic}">${cat.icon}</div>
+    <div class="pacc-info"><div class="pacc-name">${cat.name}</div><div class="pacc-summary">Locked</div></div>
+    <div class="pacc-status">🔒</div>
+  </div>
+  <div class="pacc-locked">Unlock Tactile from the Today tab when you're ready to add it.</div>
+</div>`;
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function refreshPlanCat(catId) {
+  const d = draft[catId]||{};
+  const complete = !!(d.primary && d.secondary);
+  ['primary','secondary'].forEach(slot => {
+    const el = document.getElementById(slot==='primary'?'pcp-'+catId:'pcb-'+catId);
+    if (!el) return;
+    el.querySelectorAll('.pchip').forEach(btn => {
+      const a = btn.dataset.pa;
+      btn.className = 'pchip';
+      if (slot==='primary'   && a===d.primary)   btn.classList.add('sel-p');
+      if (slot==='secondary' && a===d.secondary)  btn.classList.add('sel-b');
+      if (slot==='primary'   && a===d.secondary)  btn.classList.add('dimmed');
+      if (slot==='secondary' && a===d.primary)    btn.classList.add('dimmed');
+    });
+  });
+  const sumEl = document.getElementById('psum-'+catId);
+  const stEl  = document.getElementById('pst-'+catId);
+  if (sumEl) { sumEl.textContent = pSummary(catId); sumEl.className = 'pacc-summary'+(complete?' set':''); }
+  if (stEl)  { stEl.textContent = complete?'✓':''; stEl.className = 'pacc-status'+(complete?' done':''); }
+}
+
+function savePlan() {
+  const active = CATS.filter(c => c.phase!==2 || S.settings.tactileUnlocked);
+  const missing = active.filter(c => !draft[c.id]?.primary || !draft[c.id]?.secondary);
+  if (missing.length) { showToast('Please set primary & backup for: '+missing.map(c=>c.name).join(', ')); return; }
+  S.plan = JSON.parse(JSON.stringify(draft));
+  persist();
+  showView('daily');
+  renderDaily();
+  showToast('✓ Plan saved!');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — JOURNAL
+// ═══════════════════════════════════════════════════════════
+function renderJournal() {
+  const el = document.getElementById('journal-scroll');
+  if (!el) return;
+
+  const streak = calcStreak();
+  const best   = calcBestStreak();
+  const total  = calcTotalDone();
+  const todayStr = todayKey();
+
+  // Stats
+  let h = `<div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-num">${streak}</div><div class="stat-label">day streak</div></div>
+    <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-num">${best}</div><div class="stat-label">best streak</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-num">${total}</div><div class="stat-label">days done</div></div>
+  </div>`;
+
+  // Today's reflection
+  const note = getDayNote();
+  const todayLog = (S.history[todayStr]?.stateLog || []);
+  const todayLabel = new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  const stateLogHTML = todayLog.length > 0
+    ? `<div class="jstate-row">${todayLog.map(e=>`<div class="jstate-pill jsp-${e.state}"><div class="log-dot ld-${e.state}" style="width:7px;height:7px"></div>${e.time} ${STATE_META[e.state]?.label||e.state}</div>`).join('')}</div>`
+    : `<div style="font-size:12px;color:var(--light);margin-top:6px">No state check-ins yet today — tap the coloured buttons on the Today tab.</div>`;
+  h += `<div class="reflection-card">
+    <div class="reflection-head">
+      <span class="reflection-head-text">Today's reflection</span>
+      <span class="reflection-date">${todayLabel}</span>
+    </div>
+    <div class="reflection-body">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:8px">State log</div>
+      ${stateLogHTML}
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin:14px 0 4px">Notes</div>
+      <textarea class="reflection-ta" id="reflection-ta" placeholder="How did your practice feel today? Any observations to remember…" rows="3">${note}</textarea>
+    </div>
+  </div>`;
+
+  // History
+  h += `<div class="journal-section-label">Past days</div>`;
+
+  // Days with data, excluding today, newest first
+  const pastDays = Object.keys(S.history)
+    .filter(k => k !== todayStr && CATS.some(c => S.history[k][c.id]?.completed))
+    .sort((a,b) => b.localeCompare(a));
+
+  if (pastDays.length === 0) {
+    h += `<div class="journal-empty">Your practice history will appear here.<br>Complete your first session to get started.</div>`;
+  } else {
+    pastDays.slice(0, 60).forEach(k => { h += jDayCard(k); });
+  }
+
+  el.innerHTML = h;
+
+  // Re-attach textarea listener
+  const ta = document.getElementById('reflection-ta');
+  if (ta) ta.addEventListener('input', e => setDayNote(e.target.value));
+}
+
+function jDayCard(dateKey) {
+  const ids = coreIds();
+  const d = S.history[dateKey] || {};
+  const coreDone = ids.filter(id=>d[id]?.completed).length;
+  const coreTotal = ids.length;
+  const isCoreDone = coreDone === coreTotal;
+  const isPartial  = coreDone > 0 && !isCoreDone;
+
+  const dateObj = new Date(dateKey+'T12:00:00');
+  const dateLabel = dateObj.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const badgeText = isCoreDone ? coreDone+'/'+coreTotal+' core ✓' : (coreDone>0 ? coreDone+'/'+coreTotal+' core' : 'no core done');
+
+  let borderCls = isCoreDone ? ' core-done' : (isPartial ? ' partial' : '');
+
+  // Core activities
+  let coreRows = '';
+  CATS.filter(c=>c.phase!==3).forEach(cat => {
+    const cd = d[cat.id];
+    if (!cd?.completed) return;
+    const activity = cd.activityDone || '—';
+    const isB = cd.usedSecondary;
+    coreRows += `<div class="jact">
+      <span class="jact-icon">${cat.icon}</span>
+      <span class="jact-name">${activity}${isB?'<span class="jact-tag backup">backup</span>':''}</span>
+    </div>`;
+  });
+
+  // Bonus activities
+  const bonusCats = CATS.filter(c=>c.phase===3 && d[c.id]?.completed);
+  let bonusRows = '';
+  if (bonusCats.length > 0) {
+    bonusRows += '<div class="jbonus-sep">Bonus</div>';
+    bonusCats.forEach(cat => {
+      const cd = d[cat.id];
+      const activity = cd.activityDone || '—';
+      const isB = cd.usedSecondary;
+      bonusRows += `<div class="jact">
+        <span class="jact-icon">${cat.icon}</span>
+        <span class="jact-name">${activity}${isB?'<span class="jact-tag backup">backup</span>':''}</span>
+      </div>`;
+    });
+  }
+
+  const dayNote = d.dayNote ? `<div class="jday-note">"${d.dayNote}"</div>` : '';
+  const stateLog = d.stateLog && d.stateLog.length > 0
+    ? `<div class="jstate-row">${d.stateLog.map(e=>`<div class="jstate-pill jsp-${e.state}"><div class="log-dot ld-${e.state}" style="width:7px;height:7px"></div>${e.time} ${STATE_META[e.state]?.label||e.state}</div>`).join('')}</div>`
+    : '';
+  const hasActivities = coreRows || bonusRows;
+
+  return `<div class="jday${borderCls}">
+  <div class="jday-head">
+    <span class="jday-date">${dateLabel}</span>
+    <span class="jday-badge${isCoreDone?' green':''}">${badgeText}</span>
+  </div>
+  <div class="jday-body">
+    ${hasActivities ? coreRows+bonusRows : '<div style="font-size:13px;color:var(--light)">No activities recorded</div>'}
+    ${stateLog}
+    ${dayNote}
+  </div>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// VIEWS & NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showView(name) {
+  ['daily','plan','journal'].forEach(v => {
+    document.getElementById('v-'+v).hidden = v!==name;
+    document.getElementById('nav-'+v).classList.toggle('active', v===name);
+  });
+  if (name==='plan')    renderPlan();
+  if (name==='journal') renderJournal();
+}
+
+// ═══════════════════════════════════════════════════════════
+// EVENT DELEGATION
+// ═══════════════════════════════════════════════════════════
+function delegateDaily() {
+  const scroll = document.getElementById('daily-scroll');
+  scroll.addEventListener('click', e => {
+    const tog = e.target.closest('[data-toggle]');
+    if (tog && !e.target.closest('[data-check]') && !e.target.closest('.card-body')) {
+      document.getElementById('card-'+tog.dataset.toggle)?.classList.toggle('open'); return;
+    }
+    const chk = e.target.closest('[data-check]');
+    if (chk) { toggleComplete(chk.dataset.check); return; }
+    const sw = e.target.closest('[data-swap]');
+    if (sw) { swapActivity(sw.dataset.swap); return; }
+    const sl = e.target.closest('[data-slot]');
+    if (sl) { selectSlot(sl.dataset.slot, sl.dataset.val); return; }
+    const tt = e.target.closest('[data-timer-toggle]');
+    if (tt) { timerToggle(tt.dataset.timerToggle); return; }
+    const tr = e.target.closest('[data-timer-reset]');
+    if (tr) { timerReset(tr.dataset.timerReset); return; }
+    const ga = e.target.closest('[data-goal]');
+    if (ga) { adjustGoal(ga.dataset.goal, parseInt(ga.dataset.delta)); return; }
+    if (e.target.closest('[data-action="unlock"]')) { unlockTactile(); return; }
+    if (e.target.closest('[data-action="go-plan"]')) { showView('plan'); return; }
+  });
+  scroll.addEventListener('input', e => {
+    const ta = e.target.closest('[data-notes]');
+    if (ta) setCatDay(ta.dataset.notes, { notes: ta.value });
+  });
+}
+
+function delegatePlan() {
+  const scroll = document.getElementById('plan-scroll');
+  scroll.addEventListener('click', e => {
+    // Accordion toggle
+    const ptog = e.target.closest('[data-ptoggle]');
+    if (ptog && !e.target.closest('.pacc-body')) {
+      document.getElementById('pacc-'+ptog.dataset.ptoggle)?.classList.toggle('open'); return;
+    }
+    // Chip pick
+    const chip = e.target.closest('.pchip');
+    if (chip && !chip.classList.contains('dimmed')) {
+      const catId = chip.dataset.pc, slot = chip.dataset.ps, activity = chip.dataset.pa;
+      if (!draft[catId]) draft[catId] = { primary: null, secondary: null };
+      draft[catId][slot] = draft[catId][slot]===activity ? null : activity;
+      const other = slot==='primary'?'secondary':'primary';
+      if (draft[catId][other]===activity) draft[catId][other] = null;
+      refreshPlanCat(catId);
+    }
+  });
+  document.getElementById('save-plan-btn').addEventListener('click', savePlan);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DAILY ACTIONS
+// ═══════════════════════════════════════════════════════════
+function toggleComplete(id) {
+  const day = getCatDay(id);
+  const nv = !day.completed;
+  const plan = S.plan[id]||{};
+  const actDone = nv ? (day.usedSecondary ? plan.secondary : plan.primary) || null : null;
+  setCatDay(id, { completed: nv, activityDone: actDone });
+
+  document.getElementById('card-'+id)?.classList.toggle('done', nv);
+  document.querySelector('[data-check="'+id+'"]')?.classList.toggle('done', nv);
+
+  updateProgress();
+
+  const done=coreDoneCount(), total=coreIds().length;
+  showToast(nv ? (done===total ? '🎉 Core practice complete for today!' : '✓ Done!') : '');
+}
+
+function swapActivity(id) {
+  const day = getCatDay(id);
+  const nv = !day.usedSecondary;
+  setCatDay(id, { usedSecondary: nv });
+  const plan = S.plan[id]||{};
+
+  const dispEl = document.getElementById('act-'+id);
+  if (dispEl) {
+    dispEl.querySelector('.act-type-label').className = 'act-type-label'+(nv?' backup':'');
+    dispEl.querySelector('.act-type-label').textContent = nv ? 'Backup activity' : 'Primary activity';
+    dispEl.querySelector('.act-name').textContent = nv ? plan.secondary : plan.primary;
+    const swapLabel = nv ? '↩ Back to primary: '+plan.primary : '⇄ Swap to backup: '+plan.secondary;
+    dispEl.querySelector('.swap-btn').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>${swapLabel}`;
+  }
+
+  const subEl = document.getElementById('csub-'+id);
+  if (subEl) {
+    const d2 = getCatDay(id);
+    const cur = nv ? plan.secondary : plan.primary;
+    subEl.textContent = cur+(d2.slot?' · '+d2.slot:'');
+    subEl.className = 'card-sub set'+(nv?' swapped':'');
+  }
+}
+
+function selectSlot(id, slot) {
+  setCatDay(id, { slot });
+  document.querySelectorAll('[data-slot="'+id+'"]').forEach(b => b.classList.toggle('active', b.dataset.val===slot));
+  const day=getCatDay(id), plan=S.plan[id]||{};
+  const cur = day.usedSecondary ? plan.secondary : plan.primary;
+  const subEl = document.getElementById('csub-'+id);
+  if (subEl && cur) subEl.textContent = cur+(slot?' · '+slot:'');
+}
+
+function unlockTactile() {
+  S.settings.tactileUnlocked = true;
+  persist();
+  renderDaily(); updateProgress();
+  showToast('✨ Tactile unlocked! Set it up in My Plan.');
+}
+
+function showToast(msg) {
+  if (!msg) return;
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+// Nav
+document.getElementById('nav-daily').addEventListener('click',   () => showView('daily'));
+document.getElementById('nav-plan').addEventListener('click',    () => showView('plan'));
+document.getElementById('nav-journal').addEventListener('click', () => showView('journal'));
+
+// State check-in card (lives outside daily-scroll)
+document.addEventListener('click', e => {
+  const stl = e.target.closest('[data-state-log]');
+  if (stl) logState(stl.dataset.stateLog);
+});
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+S = loadState();
+getToday();
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('app-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  renderDaily();
+  updateProgress();
+  renderCheckinLog();
+  delegateDaily();
+  delegatePlan();
+});
+</script>
+</body>
+</html>
